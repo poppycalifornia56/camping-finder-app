@@ -1,0 +1,15 @@
+{
+  "files": {
+    "main.css": "/camping-finder-app/static/css/main.9f0bbe9b.css",
+    "main.js": "/camping-finder-app/static/js/main.931bd83b.js",
+    "static/js/453.8942cfab.chunk.js": "/camping-finder-app/static/js/453.8942cfab.chunk.js",
+    "index.html": "/camping-finder-app/index.html",
+    "main.9f0bbe9b.css.map": "/camping-finder-app/static/css/main.9f0bbe9b.css.map",
+    "main.931bd83b.js.map": "/camping-finder-app/static/js/main.931bd83b.js.map",
+    "453.8942cfab.chunk.js.map": "/camping-finder-app/static/js/453.8942cfab.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.9f0bbe9b.css",
+    "static/js/main.931bd83b.js"
+  ]
+}
