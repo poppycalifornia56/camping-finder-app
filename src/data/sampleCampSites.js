@@ -1,0 +1,55 @@
+export const sampleCampSites = [
+  {
+    id: 1,
+    name: "Pine Valley Campground",
+    coordinates: [34.1234, -118.2851],
+    isPermitted: true,
+    amenities: ["Water", "Toilets", "Picnic tables"],
+    description:
+      "Beautiful campground surrounded by pine trees with access to hiking trails.",
+    maxStay: "14 days",
+    fee: "$20/night",
+  },
+  {
+    id: 2,
+    name: "Lakeside Camp",
+    coordinates: [34.0522, -118.2437],
+    isPermitted: true,
+    amenities: ["Water", "Toilets", "Fishing"],
+    description:
+      "Scenic campground on the shores of Lake Crystal with excellent fishing opportunities.",
+    maxStay: "7 days",
+    fee: "$15/night",
+  },
+  {
+    id: 3,
+    name: "Forest Clearing",
+    coordinates: [34.0689, -118.4452],
+    isPermitted: false,
+    amenities: ["None"],
+    description:
+      "This area is not designated for camping. Protected forest reserve.",
+    maxStay: "Not allowed",
+    fee: "N/A",
+  },
+  {
+    id: 4,
+    name: "Mountain View Camp",
+    coordinates: [34.1478, -118.1445],
+    isPermitted: true,
+    amenities: ["Water", "Toilets", "Fire pits", "Showers"],
+    description: "High elevation campground with spectacular mountain views.",
+    maxStay: "10 days",
+    fee: "$25/night",
+  },
+  {
+    id: 5,
+    name: "Desert Oasis",
+    coordinates: [34.0195, -118.4912],
+    isPermitted: true,
+    amenities: ["Water", "Shade structures"],
+    description: "Remote desert camping with stargazing opportunities.",
+    maxStay: "5 days",
+    fee: "$10/night",
+  },
+];
