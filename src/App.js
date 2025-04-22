@@ -1,57 +1,53 @@
 import React, { useState, useEffect } from "react";
 import "./styles/App.css";
 import NavBar from "./components/NavBar";
-import SearchBar from "./components/SearchBar";
 import CampingMap from "./components/CampingMap";
-import CampSiteList from "./components/CampSiteList";
 import CampSiteDetails from "./components/CampSiteDetails";
-import {
-  getCampSites,
-  getCampSiteById,
-  searchCampSites,
-} from "./services/campSiteService";
+import CampingStatus from "./components/CampingStatus";
+import { europeanCampSites } from "./data/europeanCampSites";
+import { checkCampingPermission } from "./services/campingRegulationsService";
+import { getCurrentLocation } from "./services/geoLocationService";
 
 function App() {
   const [campSites, setCampSites] = useState([]);
   const [selectedCampSite, setSelectedCampSite] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [selectedLocation, setSelectedLocation] = useState(null);
+  const [campingStatus, setCampingStatus] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetchCampSites();
+    // Use European camping sites data
+    setCampSites(europeanCampSites);
   }, []);
 
-  const fetchCampSites = async () => {
-    try {
-      setLoading(true);
-      const data = await getCampSites();
-      setCampSites(data);
-      setLoading(false);
-    } catch (err) {
-      setError("Failed to fetch camping sites");
-      setLoading(false);
-      console.error(err);
-    }
+  const handleCampSiteSelect = (id) => {
+    const campSite = campSites.find((site) => site.id === id);
+    setSelectedCampSite(campSite);
   };
 
-  const handleCampSiteSelect = async (id) => {
+  const handleCheckLocation = async (lat, lng) => {
     try {
-      const campSite = await getCampSiteById(id);
-      setSelectedCampSite(campSite);
-    } catch (err) {
-      console.error("Error fetching camp site details:", err);
-    }
-  };
+      setIsLoading(true);
+      setCampingStatus(null);
 
-  const handleSearch = async (query) => {
-    try {
-      setLoading(true);
-      const results = await searchCampSites(query);
-      setCampSites(results);
-      setLoading(false);
+      // If no coordinates provided, use current location
+      if (!lat || !lng) {
+        const location = await getCurrentLocation();
+        lat = location.lat;
+        lng = location.lng;
+      }
+
+      // Update selected location
+      setSelectedLocation({ lat, lng });
+
+      // Check if camping is permitted
+      const permissionResult = await checkCampingPermission(lat, lng);
+      setCampingStatus(permissionResult);
+      setIsLoading(false);
     } catch (err) {
-      setError("Search failed");
-      setLoading(false);
+      setError("Failed to check camping permissions");
+      setIsLoading(false);
       console.error(err);
     }
   };
@@ -60,17 +56,30 @@ function App() {
     <div className="app">
       <NavBar />
       <div className="app-container">
-        <SearchBar onSearch={handleSearch} />
+        <div className="app-header">
+          <h1>Can I Camp Here? - European Camping Finder</h1>
+          <p>
+            Check if camping is allowed at your current location or any spot in
+            Europe
+          </p>
+        </div>
 
         {error && <div className="error-message">{error}</div>}
 
-        {loading ? (
-          <div className="loading">Loading camping sites...</div>
-        ) : (
-          <div className="main-content">
+        <div className="main-content">
+          <div className="map-section">
             <CampingMap
               campSites={campSites}
               onCampSiteSelect={handleCampSiteSelect}
+              onCheckLocation={handleCheckLocation}
+              selectedLocation={selectedLocation}
+            />
+          </div>
+
+          <div className="info-section">
+            <CampingStatus
+              campingStatus={campingStatus}
+              isLoading={isLoading}
             />
 
             {selectedCampSite && (
@@ -79,13 +88,8 @@ function App() {
                 onClose={() => setSelectedCampSite(null)}
               />
             )}
-
-            <CampSiteList
-              campSites={campSites}
-              onCampSiteSelect={handleCampSiteSelect}
-            />
           </div>
-        )}
+        </div>
       </div>
     </div>
   );

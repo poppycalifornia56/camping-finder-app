@@ -1,5 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import {
+  MapContainer,
+  TileLayer,
+  Marker,
+  Popup,
+  useMap,
+  useMapEvents,
+} from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { getCurrentLocation } from "../services/geoLocationService";
@@ -38,58 +45,100 @@ const notPermittedIcon = new L.Icon({
   shadowSize: [41, 41],
 });
 
-// Location finder component
-function LocationMarker() {
+const userIcon = new L.Icon({
+  iconUrl:
+    "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png",
+  shadowUrl:
+    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41],
+});
+
+const selectedLocationIcon = new L.Icon({
+  iconUrl:
+    "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-violet.png",
+  shadowUrl:
+    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41],
+});
+
+// Component to find user location and center map
+function LocationFinder({ onLocationFound }) {
   const [position, setPosition] = useState(null);
   const map = useMap();
 
   useEffect(() => {
     getCurrentLocation()
       .then((location) => {
-        setPosition([location.lat, location.lng]);
-        map.flyTo([location.lat, location.lng], 12);
+        const newPosition = [location.lat, location.lng];
+        setPosition(newPosition);
+        map.flyTo(newPosition, 12);
+        onLocationFound(newPosition[0], newPosition[1]);
       })
       .catch((error) => {
         console.error("Error getting location:", error);
+        // Default to central Europe if location access is denied
+        const defaultPosition = [48.8566, 2.3522]; // Paris
+        map.flyTo(defaultPosition, 5);
       });
-  }, [map]);
+  }, [map, onLocationFound]);
 
   return position === null ? null : (
-    <Marker
-      position={position}
-      icon={
-        new L.Icon({
-          iconUrl:
-            "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png",
-          shadowUrl:
-            "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
-          iconSize: [25, 41],
-          iconAnchor: [12, 41],
-          popupAnchor: [1, -34],
-          shadowSize: [41, 41],
-        })
-      }
-    >
-      <Popup>You are here</Popup>
+    <Marker position={position} icon={userIcon}>
+      <Popup>Your current location</Popup>
     </Marker>
   );
 }
 
-function CampingMap({ campSites, onCampSiteSelect }) {
-  const defaultPosition = [34.0522, -118.2437]; // Los Angeles as default
+// Component to handle map clicks
+function MapClickHandler({ onMapClick }) {
+  useMapEvents({
+    click: (e) => {
+      onMapClick(e.latlng.lat, e.latlng.lng);
+    },
+  });
+
+  return null;
+}
+
+function CampingMap({
+  campSites,
+  onCampSiteSelect,
+  onCheckLocation,
+  selectedLocation,
+}) {
+  // Center on Europe by default
+  const defaultPosition = [48.8566, 2.3522]; // Paris
 
   return (
-    <div style={{ height: "70vh", width: "100%" }}>
+    <div className="map-container">
       <MapContainer
         center={defaultPosition}
-        zoom={10}
+        zoom={5}
         style={{ height: "100%", width: "100%" }}
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        <LocationMarker />
+
+        <LocationFinder onLocationFound={onCheckLocation} />
+        <MapClickHandler onMapClick={onCheckLocation} />
+
+        {selectedLocation && (
+          <Marker
+            position={[selectedLocation.lat, selectedLocation.lng]}
+            icon={selectedLocationIcon}
+          >
+            <Popup>Selected location for camping check</Popup>
+          </Marker>
+        )}
+
         {campSites.map((site) => (
           <Marker
             key={site.id}
@@ -105,13 +154,16 @@ function CampingMap({ campSites, onCampSiteSelect }) {
               <div>
                 <h3>{site.name}</h3>
                 <p>
+                  <strong>Country:</strong> {site.country}
+                </p>
+                <p>
                   <strong>Status:</strong>{" "}
                   {site.isPermitted
                     ? "Camping Permitted"
                     : "No Camping Allowed"}
                 </p>
                 <p>
-                  <strong>Amenities:</strong> {site.amenities.join(", ")}
+                  <strong>Type:</strong> {site.permitType}
                 </p>
                 <button onClick={() => onCampSiteSelect(site.id)}>
                   View Details
@@ -121,6 +173,19 @@ function CampingMap({ campSites, onCampSiteSelect }) {
           </Marker>
         ))}
       </MapContainer>
+
+      <div className="map-actions">
+        <button
+          className="check-camping-button"
+          onClick={() => onCheckLocation()}
+        >
+          Can I Camp Here?
+        </button>
+        <p className="map-instructions">
+          Click anywhere on the map to check if camping is allowed at that
+          location.
+        </p>
+      </div>
     </div>
   );
 }
